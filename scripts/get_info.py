@@ -51,7 +51,7 @@ jobLink_real = list(set(jobLink))
 
 for jj in jobLink_real:
     r1 = requests.get(jj)
-    # print(jobLink_real[0])
+    print(jj.index())
     soup1 = bs4.BeautifulSoup(r1.text,'lxml')
     job_desc=(soup1.find('div',attrs={'id':'job-listing-show-container'})).text.strip()
 
@@ -61,7 +61,7 @@ for jj in jobLink_real:
     job_special_tmp = job_sump.find_all('span',attrs={'class':'listing-tag'})
     for i in job_special_tmp:
         job_special.append(i.text.strip())
-    job_information[job_name] = {'job_desc':job_desc,'job_time':job_time,'job_name':job_name,'job_special':job_special}
+    job_information[job_name] = {'job_desc':job_desc,'job_time':job_time,'job_name':job_name,'job_special':job_special,'job_link':jj}
 
 # print(job_desc)
 # print(job_time)
