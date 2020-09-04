@@ -12,16 +12,16 @@ from logging.handlers import RotatingFileHandler
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
                     datefmt='%a, %d %b %Y %H:%M:%S',
-                    filename='get_info.log',
+                    filename='getinfo.log',
                     filemode='a+')
-Rthandler = RotatingFileHandler('get_info.log', maxBytes=10240*10240,backupCount=10)
+Rthandler = RotatingFileHandler('getinfo.log', maxBytes=10240*10240,backupCount=10)
 Rthandler.setLevel(logging.DEBUG)
 formatter = logging.Formatter(
             '%(asctime)s [%(levelname)s] [%(module)s:%(funcName)s]- %(message)s [%(module)s:%(funcName)s]')
 Rthandler.setFormatter(formatter)
 logging.getLogger('').addHandler(Rthandler)
-sh = logging.StreamHandler()#往屏幕上输出
-sh.setFormatter(formatter) #设置屏幕上显示的格式
+# sh = logging.StreamHandler()#往屏幕上输出
+# sh.setFormatter(formatter) #设置屏幕上显示的格式
 
 # mutex = threading.Lock()
 # def setLogger(log):
@@ -69,22 +69,24 @@ try:
 
     find_http_start = datetime.datetime.now()
 
-    def getJobLink(tag):
-        for tagi in tag:
+    def getJobLink(tag_tmp):
+        jobLink_tmp =[]
+        jobcategry_tmp=[]
+        for tagi in tag_tmp:
             if 'href' in tagi.attrs.keys():
                 contenets = tagi.contents
                 for i in contenets:
                     if isinstance(i,bs4.element.Tag):
                         list_value = list(i.attrs.values())[:]
                         if ['company'] in list_value:
-                            jobLink.append(url1+tagi.attrs['href'])
+                            jobLink_tmp.append(url1+tagi.attrs['href'])
                     else:
                         continue
 
                 if '/categories/' in tagi.attrs['href']:
-                    if 'view all' in str(tagi.contents[0]).lower():
-                        jobcategry.append(url1+tagi.attrs['href'])
-        return list(set(jobLink)),list(set(jobcategry))
+                    if 'all' in str(tagi.contents[0]).lower():
+                        jobcategry_tmp.append(url1+tagi.attrs['href'])
+        return list(set(jobLink_tmp)),list(set(jobcategry_tmp))
 
     jobLink,jobcategry = getJobLink(tag)
     getLogger().info(len(jobcategry))
@@ -96,7 +98,9 @@ try:
         soup_link = bs4.BeautifulSoup(r_link.text, 'lxml')
         # 输出结果
         tag_link = (soup_link.find('div', attrs={'id': 'job_list'})).find_all('a')
-        jobLink_category,jobcategry_2 = getJobLink(tag_link)
+        jobLink_category_2,jobcategry_2 = getJobLink(tag_link)
+        jobLink_category= jobLink_category+jobLink_category_2
+        print(jobcategry.index(link))
         # for tagi_link in tag_link:
         #     if 'href' in tagi_link.attrs.keys():
         #         contenets = tagi_link.contents
@@ -124,7 +128,10 @@ try:
         getLogger().info(jj)
         soup1 = bs4.BeautifulSoup(r1.text,'lxml')
         job_sum1 = soup1.find('section',attrs={'id':'job-show'})
-        job_desc = (job_sum1.find('div',attrs={'id':'job-listing-show-container'})).text.strip()
+        job_desc = ((job_sum1.find('div',attrs={'id':'job-listing-show-container'})).contents)
+            # .text.strip()
+        job_desc = map(str,job_desc)
+        job_desc = ''.join(job_desc)
         job_applyLink= (job_sum1.find('a',attrs={'id':'job-cta-alt'})).attrs['href']
 
         job_sum2 = soup1.find('div',attrs={'class':'listing-header-container'})
@@ -135,7 +142,7 @@ try:
             job_special.append(i.text.strip())
         job_information[int(jobLink_sum.index(jj))+1] = {'job_desc':job_desc,'job_time':job_time,'job_name':job_name,'job_special':job_special,'job_link':jj,'job_applyLink':job_applyLink}
         link_analysis_stop = datetime.datetime.now()
-        getLogger().info('索引'+str(jobLink_sum.index(jj))+'的链接解析需要的时间为' + str((link_analysis_stop - link_analysis_start).seconds)+'s')
+        getLogger().info('序号'+str(jobLink_sum.index(jj)+1)+'的链接解析需要的时间为' + str((link_analysis_stop - link_analysis_start).seconds)+'s')
         getLogger().info('')
     # getLogger().info(job_desc)
     # getLogger().info(job_time)
