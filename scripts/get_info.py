@@ -54,9 +54,43 @@ logging.getLogger('').addHandler(Rthandler)
 
 try:
     starttime = datetime.datetime.now()
+    url2 = "http://remotive.io/"
+    r2 = requests.get(url2)
+    soup2=bs4.BeautifulSoup(r2.text,'lxml')
+    tag2 = (soup2.find('div',attrs={'id':'job_list'})).find_all('li',attrs={'class':'category-list'})
+    dataurl=[]
+    dataurl_tag =[]
+    more_job = []
+    more_job_tag =[]
+    more_job_detail=[]
+    for tag2_tmp in tag2:
+        if tag2_tmp.find_all('h2',attrs={'class':'category-title'})==[]:
+            continue
+        else:
+            dataurl_tag.append(tag2_tmp.find_all('li',attrs={'class':'job-list-item'}))
+            ss = tag2_tmp.find_all('a',attrs={'class':'more-jobs'})
+            if ss !=[]:
+                more_job_tag.append(ss)
+
+    for dataurl_tag_tmp in dataurl_tag:
+        for dataurl_tag_tmp_tmp in dataurl_tag_tmp:
+            dataurl.append(url2+dataurl_tag_tmp_tmp.attrs['data-url'])
+
+    for more_job_tag_tmp in more_job_tag:
+        for more_job_tag_tmp_tmp in more_job_tag_tmp:
+            more_job.append(url2+more_job_tag_tmp_tmp.attrs['href'])
+    for more_link in more_job:
+        more_job_detail=[]
+        r_tmp = requests.get(url2)
+        soup_tmp=bs4.BeautifulSoup(r_tmp.text,'lxml')
+        url_tmp = (soup_tmp.find('div',attrs={'id':'job_list'})).find_all('li',attrs={'class':'job-list-item'})
+        for url_tmp_tmp in url_tmp:
+            more_job_detail.append(url_tmp_tmp.attrs['data-url'])
+        more_job_detail = list(set(more_job_detail))
+        print(1)
+
     url1="https://weworkremotely.com"
     r = requests.get(url1)
-
     soup = bs4.BeautifulSoup(r.text,'lxml')
     #输出结果
     tag = (soup.find('div',attrs={'id':'job_list'})).find_all('a')
