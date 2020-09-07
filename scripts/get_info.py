@@ -80,14 +80,37 @@ try:
         for more_job_tag_tmp_tmp in more_job_tag_tmp:
             more_job.append(url2+more_job_tag_tmp_tmp.attrs['href'])
     for more_link in more_job:
-        more_job_detail=[]
-        r_tmp = requests.get(url2)
+        r_tmp = requests.get(more_link)
         soup_tmp=bs4.BeautifulSoup(r_tmp.text,'lxml')
-        url_tmp = (soup_tmp.find('div',attrs={'id':'job_list'})).find_all('li',attrs={'class':'job-list-item'})
+        url_tmp = (soup_tmp.find('div',attrs={'id':'job_list'})).find_all('li',attrs={'class':"job-list-item"})
         for url_tmp_tmp in url_tmp:
-            more_job_detail.append(url_tmp_tmp.attrs['data-url'])
-        more_job_detail = list(set(more_job_detail))
-        print(1)
+            more_job_detail.append(url2+url_tmp_tmp.attrs['data-url'])
+    more_job_detail = list(set(more_job_detail))
+    dataurlSum = dataurl+more_job_detail
+    dataurlSum = list(set(dataurlSum))
+    job_special = []
+    for dataurlDetail in dataurlSum:
+        r_detial=requests.get(dataurlDetail)
+        soupDetail = bs4.BeautifulSoup(r_detial.text,'lxml')
+        urlDe = (soupDetail.find('section',attrs={'class':'job-details-page'})).find('div',attrs={'class':'wrapper'})
+        job_summary =(urlDe.find('div',attrs={'class':'content'}))
+        job_name_2 =job_summary.h1.contents[0]
+        job_company=job_summary.h2.contents[0]
+        jobsp = job_summary.find_all('p',recursive=False)
+        job_time = job_summary.find('p').contents[0]
+        for i in jobsp:
+            ii = i.text.strip()
+            job_special.append(ii)
+            # if len(str(ii).split(":"))==2:
+            #     job_special[(ii.split(':'))[0]] = (ii.split(':'))[1]
+        job_special.pop(0)
+        job_special.pop(0)
+        tip = job_summary.find_all('a',attrs={'class':'job-tag'})
+        for tip_tmp in tip:
+            job_special.append(tip_tmp.text.strip())
+        job_desc=job_summary.find('div',attrs={'class':'job-description'}).text.strip()
+        job_apply=(job_summary.find('div',attrs={'apply-wrapper'})).find('a',attrs={'class':'btn btn_apply'}).attrs['href']
+        print(2)
 
     url1="https://weworkremotely.com"
     r = requests.get(url1)

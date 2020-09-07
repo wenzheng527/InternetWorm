@@ -4979,3 +4979,154 @@ Traceback (most recent call last):
   File "D:/SmartCode/github/InternetWorm/scripts/get_info.py", line 87, in <module>
     more_job_detail.append(url_tmp_tmp.attrs['href'])
 KeyError: 'href'
+2020-09-07 14:17:45,593 [ERROR] [get_info:<module>]- ResultSet object has no attribute 'find_all'. You're probably treating a list of elements like a single element. Did you call find_all() when you meant to call find()? [get_info:<module>]
+Traceback (most recent call last):
+  File "D:/SmartCode/github/InternetWorm/scripts/get_info.py", line 86, in <module>
+    url_tmp = ((soup_tmp.find('div',attrs={'id':'job_list'})).find_all('ul',attrs={'class':'job-list'})).find_all('li',attrs={'class':'job-list-item'})
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python35-32\lib\site-packages\bs4\element.py", line 2161, in __getattr__
+    "ResultSet object has no attribute '%s'. You're probably treating a list of elements like a single element. Did you call find_all() when you meant to call find()?" % key
+AttributeError: ResultSet object has no attribute 'find_all'. You're probably treating a list of elements like a single element. Did you call find_all() when you meant to call find()?
+2020-09-07 14:33:05,170 [ERROR] [get_info:<module>]- 'NoneType' object has no attribute 'find_all' [get_info:<module>]
+Traceback (most recent call last):
+  File "D:/SmartCode/github/InternetWorm/scripts/get_info.py", line 86, in <module>
+    url_tmp = (soup_tmp.find('div',attrs={'id':'job_list'})).find_all('li',attrs={'class':"job-list-item"})
+AttributeError: 'NoneType' object has no attribute 'find_all'
+2020-09-07 15:02:33,228 [ERROR] [get_info:<module>]- can only concatenate list (not "str") to list [get_info:<module>]
+Traceback (most recent call last):
+  File "D:/SmartCode/github/InternetWorm/scripts/get_info.py", line 89, in <module>
+    dataurlSum = dataurl+more_link
+TypeError: can only concatenate list (not "str") to list
+2020-09-07 15:05:58,519 [ERROR] [get_info:<module>]- Invalid URL '/remote-jobs/all-others/senior-project-manager-260678': No schema supplied. Perhaps you meant http:///remote-jobs/all-others/senior-project-manager-260678? [get_info:<module>]
+Traceback (most recent call last):
+  File "D:/SmartCode/github/InternetWorm/scripts/get_info.py", line 92, in <module>
+    r_detial = requests.get(dataurlDetail)
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python35-32\lib\site-packages\requests\api.py", line 76, in get
+    return request('get', url, params=params, **kwargs)
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python35-32\lib\site-packages\requests\api.py", line 61, in request
+    return session.request(method=method, url=url, **kwargs)
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python35-32\lib\site-packages\requests\sessions.py", line 516, in request
+    prep = self.prepare_request(req)
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python35-32\lib\site-packages\requests\sessions.py", line 459, in prepare_request
+    hooks=merge_hooks(request.hooks, self.hooks),
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python35-32\lib\site-packages\requests\models.py", line 314, in prepare
+    self.prepare_url(url, params)
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python35-32\lib\site-packages\requests\models.py", line 388, in prepare_url
+    raise MissingSchema(error)
+requests.exceptions.MissingSchema: Invalid URL '/remote-jobs/all-others/senior-project-manager-260678': No schema supplied. Perhaps you meant http:///remote-jobs/all-others/senior-project-manager-260678?
+2020-09-07 15:08:22,336 [ERROR] [get_info:<module>]- object of type 'Response' has no len() [get_info:<module>]
+Traceback (most recent call last):
+  File "D:/SmartCode/github/InternetWorm/scripts/get_info.py", line 93, in <module>
+    soupDetail = bs4.BeautifulSoup(r_detial,'lxml')
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python35-32\lib\site-packages\bs4\__init__.py", line 307, in __init__
+    elif len(markup) <= 256 and (
+TypeError: object of type 'Response' has no len()
+2020-09-07 15:13:27,323 [ERROR] [get_info:<module>]- object of type 'Response' has no len() [get_info:<module>]
+Traceback (most recent call last):
+  File "D:/SmartCode/github/InternetWorm/scripts/get_info.py", line 93, in <module>
+    soupDetail = bs4.BeautifulSoup(r_detial,'lxml')
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python35-32\lib\site-packages\bs4\__init__.py", line 307, in __init__
+    elif len(markup) <= 256 and (
+TypeError: object of type 'Response' has no len()
+2020-09-07 15:15:37,019 [ERROR] [get_info:<module>]- object of type 'Response' has no len() [get_info:<module>]
+Traceback (most recent call last):
+  File "D:/SmartCode/github/InternetWorm/scripts/get_info.py", line 93, in <module>
+    soupDetail = bs4.BeautifulSoup(r_detial,'lxml')
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python35-32\lib\site-packages\bs4\__init__.py", line 307, in __init__
+    elif len(markup) <= 256 and (
+TypeError: object of type 'Response' has no len()
+2020-09-07 16:22:58,905 [ERROR] [get_info:<module>]- HTTPConnectionPool(host='remotive.io', port=80): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x056435B0>: Failed to establish a new connection: [Errno 11001] getaddrinfo failed',)) [get_info:<module>]
+Traceback (most recent call last):
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python35-32\lib\site-packages\urllib3\connection.py", line 160, in _new_conn
+    (self._dns_host, self.port), self.timeout, **extra_kw
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python35-32\lib\site-packages\urllib3\util\connection.py", line 61, in create_connection
+    for res in socket.getaddrinfo(host, port, family, socket.SOCK_STREAM):
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python35-32\lib\socket.py", line 733, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+socket.gaierror: [Errno 11001] getaddrinfo failed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python35-32\lib\site-packages\urllib3\connectionpool.py", line 677, in urlopen
+    chunked=chunked,
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python35-32\lib\site-packages\urllib3\connectionpool.py", line 392, in _make_request
+    conn.request(method, url, **httplib_request_kw)
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python35-32\lib\http\client.py", line 1107, in request
+    self._send_request(method, url, body, headers)
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python35-32\lib\http\client.py", line 1152, in _send_request
+    self.endheaders(body)
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python35-32\lib\http\client.py", line 1103, in endheaders
+    self._send_output(message_body)
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python35-32\lib\http\client.py", line 934, in _send_output
+    self.send(msg)
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python35-32\lib\http\client.py", line 877, in send
+    self.connect()
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python35-32\lib\site-packages\urllib3\connection.py", line 187, in connect
+    conn = self._new_conn()
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python35-32\lib\site-packages\urllib3\connection.py", line 172, in _new_conn
+    self, "Failed to establish a new connection: %s" % e
+urllib3.exceptions.NewConnectionError: <urllib3.connection.HTTPConnection object at 0x056435B0>: Failed to establish a new connection: [Errno 11001] getaddrinfo failed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python35-32\lib\site-packages\requests\adapters.py", line 449, in send
+    timeout=timeout
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python35-32\lib\site-packages\urllib3\connectionpool.py", line 727, in urlopen
+    method, url, error=e, _pool=self, _stacktrace=sys.exc_info()[2]
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python35-32\lib\site-packages\urllib3\util\retry.py", line 439, in increment
+    raise MaxRetryError(_pool, url, error or ResponseError(cause))
+urllib3.exceptions.MaxRetryError: HTTPConnectionPool(host='remotive.io', port=80): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x056435B0>: Failed to establish a new connection: [Errno 11001] getaddrinfo failed',))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:/SmartCode/github/InternetWorm/scripts/get_info.py", line 58, in <module>
+    r2 = requests.get(url2)
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python35-32\lib\site-packages\requests\api.py", line 76, in get
+    return request('get', url, params=params, **kwargs)
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python35-32\lib\site-packages\requests\api.py", line 61, in request
+    return session.request(method=method, url=url, **kwargs)
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python35-32\lib\site-packages\requests\sessions.py", line 530, in request
+    resp = self.send(prep, **send_kwargs)
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python35-32\lib\site-packages\requests\sessions.py", line 643, in send
+    r = adapter.send(request, **kwargs)
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python35-32\lib\site-packages\requests\adapters.py", line 516, in send
+    raise ConnectionError(e, request=request)
+requests.exceptions.ConnectionError: HTTPConnectionPool(host='remotive.io', port=80): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x056435B0>: Failed to establish a new connection: [Errno 11001] getaddrinfo failed',))
+2020-09-07 17:11:30,909 [ERROR] [get_info:<module>]- ResultSet object has no attribute 'contents'. You're probably treating a list of elements like a single element. Did you call find_all() when you meant to call find()? [get_info:<module>]
+Traceback (most recent call last):
+  File "D:/SmartCode/github/InternetWorm/scripts/get_info.py", line 100, in <module>
+    if '<span>' in jobsp.contents:
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python35-32\lib\site-packages\bs4\element.py", line 2161, in __getattr__
+    "ResultSet object has no attribute '%s'. You're probably treating a list of elements like a single element. Did you call find_all() when you meant to call find()?" % key
+AttributeError: ResultSet object has no attribute 'contents'. You're probably treating a list of elements like a single element. Did you call find_all() when you meant to call find()?
+2020-09-07 17:12:38,784 [ERROR] [get_info:<module>]- ResultSet object has no attribute 'contents'. You're probably treating a list of elements like a single element. Did you call find_all() when you meant to call find()? [get_info:<module>]
+Traceback (most recent call last):
+  File "D:/SmartCode/github/InternetWorm/scripts/get_info.py", line 100, in <module>
+    ss = jobsp.contents
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python35-32\lib\site-packages\bs4\element.py", line 2161, in __getattr__
+    "ResultSet object has no attribute '%s'. You're probably treating a list of elements like a single element. Did you call find_all() when you meant to call find()?" % key
+AttributeError: ResultSet object has no attribute 'contents'. You're probably treating a list of elements like a single element. Did you call find_all() when you meant to call find()?
+2020-09-07 17:16:57,377 [ERROR] [get_info:<module>]- ResultSet object has no attribute 'contents'. You're probably treating a list of elements like a single element. Did you call find_all() when you meant to call find()? [get_info:<module>]
+Traceback (most recent call last):
+  File "D:/SmartCode/github/InternetWorm/scripts/get_info.py", line 101, in <module>
+    if '<span>' in ' '.join(jobsp.contents):
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python35-32\lib\site-packages\bs4\element.py", line 2161, in __getattr__
+    "ResultSet object has no attribute '%s'. You're probably treating a list of elements like a single element. Did you call find_all() when you meant to call find()?" % key
+AttributeError: ResultSet object has no attribute 'contents'. You're probably treating a list of elements like a single element. Did you call find_all() when you meant to call find()?
+2020-09-07 17:18:01,890 [ERROR] [get_info:<module>]- sequence item 1: expected str instance, Tag found [get_info:<module>]
+Traceback (most recent call last):
+  File "D:/SmartCode/github/InternetWorm/scripts/get_info.py", line 101, in <module>
+    if '<span>' in ' '.join(i.contents):
+TypeError: sequence item 1: expected str instance, Tag found
+2020-09-07 17:22:18,368 [ERROR] [get_info:<module>]- sequence item 1: expected str instance, Tag found [get_info:<module>]
+Traceback (most recent call last):
+  File "D:/SmartCode/github/InternetWorm/scripts/get_info.py", line 100, in <module>
+    ss = ' '.join(i.contents)
+TypeError: sequence item 1: expected str instance, Tag found
+2020-09-07 17:24:23,867 [ERROR] [get_info:<module>]- sequence item 1: expected str instance, Tag found [get_info:<module>]
+Traceback (most recent call last):
+  File "D:/SmartCode/github/InternetWorm/scripts/get_info.py", line 100, in <module>
+    ss = ' '.join(i.contents)
+TypeError: sequence item 1: expected str instance, Tag found
