@@ -63,6 +63,7 @@ try:
     more_job = []
     more_job_tag =[]
     more_job_detail=[]
+    job_information2 = {}
     for tag2_tmp in tag2:
         if tag2_tmp.find_all('h2',attrs={'class':'category-title'})==[]:
             continue
@@ -88,8 +89,11 @@ try:
     more_job_detail = list(set(more_job_detail))
     dataurlSum = dataurl+more_job_detail
     dataurlSum = list(set(dataurlSum))
-    job_special = []
+    job_special2 = []
+    job_end1= datetime.datetime.now()
+    getLogger().info('寻找链接'+url2+'的总时间为'+str((starttime - job_end1).seconds)+'s')
     for dataurlDetail in dataurlSum:
+        sync_start2 = datetime.datetime.now()
         r_detial=requests.get(dataurlDetail)
         soupDetail = bs4.BeautifulSoup(r_detial.text,'lxml')
         urlDe = (soupDetail.find('section',attrs={'class':'job-details-page'})).find('div',attrs={'class':'wrapper'})
@@ -100,19 +104,22 @@ try:
         job_time = job_summary.find('p').contents[0]
         for i in jobsp:
             ii = i.text.strip()
-            job_special.append(ii)
+            job_special2.append(ii)
             # if len(str(ii).split(":"))==2:
             #     job_special[(ii.split(':'))[0]] = (ii.split(':'))[1]
-        job_special.pop(0)
-        job_special.pop(0)
+        job_special2.pop(0)
+        job_special2.pop(0)
         tip = job_summary.find_all('a',attrs={'class':'job-tag'})
         for tip_tmp in tip:
-            job_special.append(tip_tmp.text.strip())
+            job_special2.append(tip_tmp.text.strip())
         job_desc=job_summary.find('div',attrs={'class':'job-description'}).text.strip()
-        job_apply=(job_summary.find('div',attrs={'apply-wrapper'})).find('a',attrs={'class':'btn btn_apply'}).attrs['href']
-        print(2)
-
+        job_apply=url2+((job_summary.find('div',attrs={'class':'apply-wrapper'})).find('a',attrs={'class':'btn btn-apply'})).attrs['href']
+        sync_stop2 = datetime.datetime.now()
+        job_information2[int(dataurlSum.index(dataurlDetail)+1)]={'job_name':job_name_2,'job_company':job_company,'job_time':job_time,'job_special':job_special2,'job_desc':job_desc,'job_apply':job_apply}
+        getLogger().info('解析'+url2+'的序号为'+str(dataurlSum.index(dataurlDetail)+1)+'的url的时间为'+str((sync_stop2 - sync_start2).seconds)+'s')
+    index_start = len(job_information2)+1
     url1="https://weworkremotely.com"
+    find_http_start = datetime.datetime.now()
     r = requests.get(url1)
     soup = bs4.BeautifulSoup(r.text,'lxml')
     #输出结果
@@ -123,8 +130,6 @@ try:
     job_special = []
 
     job_information ={}
-
-    find_http_start = datetime.datetime.now()
 
     def getJobLink(tag_tmp):
         jobLink_tmp =[]
@@ -175,13 +180,13 @@ try:
     getLogger().info(len(jobLink_sum))
 
     find_http_stop = datetime.datetime.now()
-    getLogger().info('寻找链接的总时间为'+str((find_http_stop - find_http_start).seconds)+'s')
+    getLogger().info('寻找链接'+str(url1)+'的总时间为'+str((find_http_stop - find_http_start).seconds)+'s')
 
     for jj in jobLink_sum:
         link_analysis_start= datetime.datetime.now()
         job_special=[]
         r1 = requests.get(jj)
-        getLogger().info(jobLink_sum.index(jj)+1)
+        getLogger().info(index_start)
         getLogger().info(jj)
         soup1 = bs4.BeautifulSoup(r1.text,'lxml')
         job_sum1 = soup1.find('section',attrs={'id':'job-show'})
@@ -197,10 +202,10 @@ try:
         job_special_tmp = job_sum2.find_all('span',attrs={'class':'listing-tag'})
         for i in job_special_tmp:
             job_special.append(i.text.strip())
-        job_information[int(jobLink_sum.index(jj))+1] = {'job_desc':job_desc,'job_time':job_time,'job_name':job_name,'job_special':job_special,'job_link':jj,'job_applyLink':job_applyLink}
+        job_information[int(index_start)] = {'job_desc':job_desc,'job_time':job_time,'job_name':job_name,'job_special':job_special,'job_link':jj,'job_applyLink':job_applyLink}
         link_analysis_stop = datetime.datetime.now()
-        getLogger().info('序号'+str(jobLink_sum.index(jj)+1)+'的链接解析需要的时间为' + str((link_analysis_stop - link_analysis_start).seconds)+'s')
-        getLogger().info('')
+        getLogger().info('序号'+str(index_start)+'的链接解析需要的时间为' + str((link_analysis_stop - link_analysis_start).seconds)+'s')
+        index_start=index_start+1
     # getLogger().info(job_desc)
     # getLogger().info(job_time)
     # getLogger().info(job_name)
