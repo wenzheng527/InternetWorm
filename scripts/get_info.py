@@ -12,14 +12,15 @@ from logging.handlers import RotatingFileHandler
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
                     datefmt='%a, %d %b %Y %H:%M:%S',
-                    filename='getinfo.log',
+                    filename='getinfo.txt',
                     filemode='a+')
-Rthandler = RotatingFileHandler('getinfo.log', maxBytes=10240*10240,backupCount=10)
+Rthandler = RotatingFileHandler('getinfo.txt', maxBytes=10240*10240,backupCount=10)
 Rthandler.setLevel(logging.DEBUG)
 formatter = logging.Formatter(
             '%(asctime)s [%(levelname)s] [%(module)s:%(funcName)s]- %(message)s [%(module)s:%(funcName)s]')
 Rthandler.setFormatter(formatter)
 logging.getLogger('').addHandler(Rthandler)
+
 
 
 try:
