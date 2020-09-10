@@ -1,10 +1,11 @@
 #首先我们先导入requests这个包
-import json
+import json,copy
 import datetime
 import requests
 import bs4
 import threading
 from fyframe_v2.log.log import getLogger
+from fyframe_v2.baselibrary.cfgparser import read_ini_file,write_ini_file
 #我们来吧百度的index页面的html源码抓取到本地，并用r变量保存
 #注意这里，网页前面的 http://一定要写出来，它并不能像真正的浏览器一样帮我们补全http协议
 import logging
@@ -24,6 +25,10 @@ logging.getLogger('').addHandler(Rthandler)
 
 
 try:
+    lastRunTime = (read_ini_file('../ini/internetworm.ini')).get('DEFAULT','lastRunTime')
+    if lastRunTime != 'FirstRun':
+        lastRunTime= datetime.datetime.strptime(lastRunTime, '%Y-%m-%d %H:%M:%S')
+
     starttime = datetime.datetime.now()
     url2 = "http://remotive.io/"
     r2 = requests.get(url2)
@@ -74,10 +79,31 @@ try:
         soupDetail = bs4.BeautifulSoup(r_detial.text,'lxml')
         urlDe = (soupDetail.find('section',attrs={'class':'job-details-page'})).find('div',attrs={'class':'wrapper'})
         job_summary =(urlDe.find('div',attrs={'class':'content'}))
+        job_time_dict = (((job_summary.find_all('p'))[1]).text.strip()).split(' ')
+        job_time_dict2 = ((job_time_dict[0]).split('/'))
+        lastindex = job_time_dict2.pop()
+        job_time_dict2.insert(0, lastindex)
+        job_time = '-'.join(job_time_dict2) + ' ' + job_time_dict[1]
+        job_time_datetime = datetime.datetime.strptime(job_time, '%Y-%m-%d %H:%M:%S')
+        if lastRunTime == 'FirstRun':
+            getLogger().info('初次运行，所有信息都爬')
+        elif job_time_datetime < lastRunTime:
+            getLogger().info('此网址信息未更新，不用爬取')
+            job_information2[int(dataurlSum.index(dataurlDetail) + 1)] = {'job_time': job_time,
+                                                                          'job_desc': '工作信息未更新',
+                                                                          'job_url': dataurlDetail}
+            sync_stop3 = datetime.datetime.now()
+            getLogger().info(
+                '解析序号为' + str(dataurlSum.index(dataurlDetail) + 1) + '的url:' + dataurlDetail + '的时间为' + str(
+                    (sync_stop3 - sync_start2).seconds) + 's')
+            continue
+        elif job_time_datetime >= lastRunTime:
+            getLogger().info('信息更新，重新爬取')
+
         job_name_2 =job_summary.h1.contents[0]
         job_company=job_summary.h2.contents[0]
         jobsp = job_summary.find_all('p',recursive=False)
-        job_time = job_summary.find('p').contents[0]
+
         for i in jobsp:
             ii = i.text.strip()
             job_special2.append(ii)
@@ -96,9 +122,32 @@ try:
     endtime_url2=datetime.datetime.now()
     getLogger().info('测试' + url2 + ',链接总数为:'+str(len(dataurlSum))+',总时间为:' + str((endtime_url2 - starttime).seconds) + 's,大概'+str('%.2f' % float(((endtime_url2 - starttime).seconds)/60.0))+'min')
     #将爬虫信息写入json文件
-    json_dicts2 = json.dumps(job_information2, indent=4, ensure_ascii=False)
-    with open('D:\work\\factory\杂\\RemotiveGetInfo.json', 'w', encoding="UTF-8") as f:
-        f.write(json_dicts2)
+    if lastRunTime !='FirstRun':
+        with open('D:\work\\factory\杂\\RemotiveGetInfo.json', 'r', encoding='UTF-8') as s:
+            json_file = json.load(s)
+
+        for k,l in job_information2.items():
+            for m,n in json_file.items():
+                if l['job_desc'] =='工作信息未更新':
+                    continue
+                else:
+                    if l['job_url']==n['job_url']:
+                        s1 = json_file[k]
+                        s2 = job_information2[k]
+                        json_file[k] = job_information2[k]
+                        s11 = json_file[k]
+                        s21 = job_information2[k]
+                    else:
+                        json_file[len(json_file)+1]=job_information2[k]
+
+
+        json_dicts2 = json.dumps(json_file, indent=4, ensure_ascii=False)
+        with open('D:\work\\factory\杂\\RemotiveGetInfo.json', 'w', encoding="UTF-8") as f:
+            f.write(json_dicts2)
+    else:
+        json_dicts2 = json.dumps(job_information2, indent=4, ensure_ascii=False)
+        with open('D:\work\\factory\杂\\RemotiveGetInfo.json', 'w', encoding="UTF-8") as f:
+            f.write(json_dicts2)
 
     starttime_url1=datetime.datetime.now()
     # index_start = len(job_information2)+1
@@ -161,14 +210,15 @@ try:
         link_analysis_start= datetime.datetime.now()
         job_special=[]
         r1 = requests.get(jj)
-        if r_detial.reason.lower() != 'ok':
-            job_information[int(jobLink_sum.index(jj))+1] = {'job_desc': '网址打开失败,返回值为'+str(r_detial.reason.lower())+'状态码'+str(r_detial.status_code),  'job_link': jj}
-            getLogger().error('网址：'+jj+'打开失败,返回值为'+str(r_detial.reason.lower())+'状态码'+str(r_detial.status_code))
+        if r1.reason.lower() != 'ok':
+            job_information[int(jobLink_sum.index(jj))+1] = {'job_desc': '网址打开失败,返回值为'+str(r1.reason.lower())+'状态码'+str(r1.status_code),  'job_link': jj}
+            getLogger().error('网址：'+jj+'打开失败,返回值为'+str(r1.reason.lower())+'状态码'+str(r1.status_code))
             # index_start = index_start + 1
             continue
         # getLogger().info(index_start)
         # getLogger().info(jj)
         soup1 = bs4.BeautifulSoup(r1.text,'lxml')
+        job_company2 = (soup1.find('div',attrs={'class':'company-card'})).h2.a.contents[0]
         job_sum1 = soup1.find('section',attrs={'id':'job-show'})
         job_desc = ((job_sum1.find('div',attrs={'id':'job-listing-show-container'})).contents)
         job_desc = map(str,job_desc)
