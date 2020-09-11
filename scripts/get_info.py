@@ -25,7 +25,8 @@ logging.getLogger('').addHandler(Rthandler)
 
 
 try:
-    lastRunTime = (read_ini_file('../ini/internetworm.ini')).get('DEFAULT','lastRunTime')
+    congfig = read_ini_file('../ini/internetworm.ini')
+    lastRunTime = congfig.get('DEFAULT','lastRunTime')
     if lastRunTime != 'FirstRun':
         lastRunTime= datetime.datetime.strptime(lastRunTime, '%Y-%m-%d %H:%M:%S')
 
@@ -132,13 +133,16 @@ try:
                     continue
                 else:
                     if l['job_url']==n['job_url']:
-                        s1 = json_file[k]
-                        s2 = job_information2[k]
-                        json_file[k] = copy.deepcopy(job_information2[k])
-                        s11 = json_file[k]
-                        s21 = job_information2[k]
+                        # s1 = json_file[k]
+                        # s2 = job_information2[k]
+                        json_file[m] = copy.deepcopy(job_information2[k])
+                        # s11 = json_file[k]
+                        # s21 = job_information2[k]
             else:
-                json_file[len(json_file)+1]=copy.deepcopy(job_information2[k])
+                if l['job_desc'] == '工作信息未更新':
+                    pass
+                else:
+                    json_file[len(json_file)+1]=copy.deepcopy(job_information2[k])
 
 
         json_dicts2 = json.dumps(json_file, indent=4, ensure_ascii=False)
@@ -218,6 +222,24 @@ try:
         # getLogger().info(index_start)
         # getLogger().info(jj)
         soup1 = bs4.BeautifulSoup(r1.text,'lxml')
+        job_time = (soup1.find('div', attrs={'class': 'listing-header-container'})).find('h3').contents[1].attrs[
+            'datetime']
+        job_time_datetime = datetime.datetime.strptime(job_time, '%Y-%m-%d %H:%M:%S')
+        if lastRunTime == 'FirstRun':
+            getLogger().info('初次运行，所有信息都爬')
+        elif job_time_datetime < lastRunTime:
+            getLogger().info('此网址信息未更新，不用爬取')
+            job_information[int(jobLink_sum.index(jj) + 1)] = {'job_time': job_time,
+                                                                          'job_desc': '工作信息未更新',
+                                                                          'job_url': jj}
+            sync_stop4 = datetime.datetime.now()
+            getLogger().info(
+                '解析序号为' + str(jobLink_sum.index(jj) + 1) + '的url:' + jj + '的时间为' + str(
+                    (sync_stop4 - link_analysis_start).seconds) + 's')
+            continue
+        elif job_time_datetime >= lastRunTime:
+            getLogger().info('信息更新，重新爬取')
+
         job_company2 = (soup1.find('div',attrs={'class':'company-card'})).h2.a.contents[0]
         job_sum1 = soup1.find('section',attrs={'id':'job-show'})
         job_desc = ((job_sum1.find('div',attrs={'id':'job-listing-show-container'})).contents)
@@ -226,7 +248,6 @@ try:
         job_applyLink= (job_sum1.find('a',attrs={'id':'job-cta-alt'})).attrs['href']
 
         job_sum2 = soup1.find('div',attrs={'class':'listing-header-container'})
-        job_time = job_sum2.find('h3').contents[1].attrs['datetime']
         job_name = job_sum2.find('h1').text.strip()
         job_special_tmp = job_sum2.find_all('span',attrs={'class':'listing-tag'})
         for i in job_special_tmp:
@@ -240,13 +261,43 @@ try:
     # getLogger().info(job_name)
     # getLogger().info(job_special)
     # getLogger().info(job_information)
-    json_dicts = json.dumps(job_information, indent=4, ensure_ascii=False)
-    with open('D:\work\\factory\杂\WeworkremotelyGetInfo.json', 'w',encoding="UTF-8") as f:
-        f.write(json_dicts)
+    if lastRunTime !='FirstRun':
+        with open('D:\work\\factory\杂\\RemotiveGetInfo.json', 'r', encoding='UTF-8') as s:
+            json_file2 = json.load(s)
+
+        for o,p in job_information.items():
+            for q,r in json_file2.items():
+                if p['job_desc'] =='工作信息未更新':
+                    continue
+                else:
+                    if p['job_url']==r['job_url']:
+                        # s1 = json_file2[q]
+                        # s2 = job_information[o]
+                        json_file2[q] = copy.deepcopy(job_information[o])
+                        # s11 = json_file2[q]
+                        # s21 = job_information[o]
+            else:
+                if p['job_desc'] == '工作信息未更新':
+                    pass
+                else:
+                    json_file2[len(json_file2)+1]=copy.deepcopy(job_information[o])
+
+
+        json_dicts = json.dumps(json_file2, indent=4, ensure_ascii=False)
+        with open('D:\work\\factory\杂\WeworkremotelyGetInfo.json', 'w', encoding="UTF-8") as f:
+            f.write(json_dicts)
+    else:
+        json_dicts = json.dumps(job_information, indent=4, ensure_ascii=False)
+        with open('D:\work\\factory\杂\WeworkremotelyGetInfo.json', 'w', encoding="UTF-8") as f:
+            f.write(json_dicts)
+
     # log_result_file.write(json_dicts)
     # log_result_file.close()
     endtime = datetime.datetime.now()
     getLogger().info('测试' + url1 +',链接总数：' + str(len(jobLink_sum)) + ',总时间为:' + str((endtime - starttime_url1).seconds) + 's,大概'+str('%.2f' % float(((endtime - starttime_url1).seconds)/60.0))+'min')
+    starttime_string = starttime.strftime("%Y-%m-%d %H:%M:%S")
+    congfig.set('DEFAULT','lastRunTime',starttime_string)
+    write_ini_file(congfig)
     getLogger().info('爬虫结束，测试总时间为：'+str((endtime-starttime).seconds)+'s,大概'+str('%.2f' % float(((endtime - starttime).seconds)/60.0))+'min')
 except Exception as e:
     getLogger().exception(e)
