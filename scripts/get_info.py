@@ -134,11 +134,11 @@ try:
                     if l['job_url']==n['job_url']:
                         s1 = json_file[k]
                         s2 = job_information2[k]
-                        json_file[k] = job_information2[k]
+                        json_file[k] = copy.deepcopy(job_information2[k])
                         s11 = json_file[k]
                         s21 = job_information2[k]
-                    else:
-                        json_file[len(json_file)+1]=job_information2[k]
+            else:
+                json_file[len(json_file)+1]=copy.deepcopy(job_information2[k])
 
 
         json_dicts2 = json.dumps(json_file, indent=4, ensure_ascii=False)
