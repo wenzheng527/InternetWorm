@@ -4,12 +4,19 @@ import datetime
 import requests
 import bs4
 import threading
-from fyframe_v2.log.log import getLogger
-from fyframe_v2.baselibrary.cfgparser import read_ini_file,write_ini_file
+import sys
+
+from configobj import ConfigObj
 #我们来吧百度的index页面的html源码抓取到本地，并用r变量保存
 #注意这里，网页前面的 http://一定要写出来，它并不能像真正的浏览器一样帮我们补全http协议
 import logging
 from logging.handlers import RotatingFileHandler
+formatter = logging.Formatter(
+            '%(asctime)s [%(levelname)s] [%(module)s:%(funcName)s]- %(message)s [%(module)s:%(funcName)s]')
+
+sh = logging.StreamHandler()  # 往屏幕上输出
+sh.setFormatter(formatter)  # 设置屏幕上显示的格式
+
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
                     datefmt='%a, %d %b %Y %H:%M:%S',
@@ -17,10 +24,29 @@ logging.basicConfig(level=logging.DEBUG,
                     filemode='a+')
 Rthandler = RotatingFileHandler('getinfo.txt', maxBytes=10240*10240,backupCount=10)
 Rthandler.setLevel(logging.DEBUG)
-formatter = logging.Formatter(
-            '%(asctime)s [%(levelname)s] [%(module)s:%(funcName)s]- %(message)s [%(module)s:%(funcName)s]')
 Rthandler.setFormatter(formatter)
 logging.getLogger('').addHandler(Rthandler)
+logging.getLogger('').addHandler(sh)
+class CfgObj(ConfigObj):
+    def set(self, section, option, value=None):
+        """Set an option.  Extends RawConfigParser.set by validating type and
+        interpolation syntax on the value."""
+        if not isinstance(section, str):
+            raise TypeError("section names must be strings")
+        if not isinstance(option, str):
+            raise TypeError("option keys must be strings")
+        """Set an option."""
+        self[section][option] = value
+
+    def get(self, section, option):
+        return self[section][option]
+
+def write_ini_file(cfg):
+    cfg.write()
+
+def read_ini_file(path):
+    cfg_product = CfgObj(path, encoding='utf-8-sig')
+    return cfg_product
 
 
 
@@ -67,15 +93,15 @@ try:
     dataurlSum = dataurl+more_job_detail
     dataurlSum = list(set(dataurlSum))
     job_end1= datetime.datetime.now()
-    getLogger().info('寻找链接' + url2 +',链接总数' + str(len(dataurlSum)) + ',总时间为' + str((job_end1 - starttime).seconds) + 's')
+    logging.info('寻找链接' + url2 +',链接总数' + str(len(dataurlSum)) + ',总时间为' + str((job_end1 - starttime).seconds) + 's')
     for dataurlDetail in dataurlSum:
         job_special2 = []
         sync_start2 = datetime.datetime.now()
-        # getLogger().info(dataurlDetail)
+        # logging.info(dataurlDetail)
         r_detial=requests.get(dataurlDetail)
         if r_detial.reason.lower() !='ok':
             job_information2[int(dataurlSum.index(dataurlDetail)+1)]={'job_desc':'网址打开失败，返回'+str(r_detial.reason.lower())+'状态码为'+str(r_detial.status_code),'job_url':dataurlDetail}
-            getLogger().error('网址'+str(dataurlDetail)+'打开失败，返回'+str(r_detial.reason.lower())+'状态码为'+str(r_detial.status_code))
+            logging.error('网址'+str(dataurlDetail)+'打开失败，返回'+str(r_detial.reason.lower())+'状态码为'+str(r_detial.status_code))
             continue
         soupDetail = bs4.BeautifulSoup(r_detial.text,'lxml')
         urlDe = (soupDetail.find('section',attrs={'class':'job-details-page'})).find('div',attrs={'class':'wrapper'})
@@ -87,19 +113,19 @@ try:
         job_time = '-'.join(job_time_dict2) + ' ' + job_time_dict[1]
         job_time_datetime = datetime.datetime.strptime(job_time, '%Y-%m-%d %H:%M:%S')
         if lastRunTime == 'FirstRun':
-            getLogger().info('初次运行，所有信息都爬')
+            logging.info('初次运行，所有信息都爬')
         elif job_time_datetime < lastRunTime:
-            getLogger().info('此网址信息未更新，不用爬取')
+            logging.info('此网址信息未更新，不用爬取')
             job_information2[int(dataurlSum.index(dataurlDetail) + 1)] = {'job_time': job_time,
                                                                           'job_desc': '工作信息未更新',
                                                                           'job_url': dataurlDetail}
             sync_stop3 = datetime.datetime.now()
-            getLogger().info(
+            logging.info(
                 '解析序号为' + str(dataurlSum.index(dataurlDetail) + 1) + '的url:' + dataurlDetail + '的时间为' + str(
                     (sync_stop3 - sync_start2).seconds) + 's')
             continue
         elif job_time_datetime >= lastRunTime:
-            getLogger().info('信息更新，重新爬取')
+            logging.info('信息更新，重新爬取')
 
         job_name_2 =job_summary.h1.contents[0]
         job_company=job_summary.h2.contents[0]
@@ -119,9 +145,9 @@ try:
         job_apply=url2+((job_summary.find('div',attrs={'class':'apply-wrapper'})).find('a',attrs={'class':'btn btn-apply'})).attrs['href']
         sync_stop2 = datetime.datetime.now()
         job_information2[int(dataurlSum.index(dataurlDetail)+1)]={'job_name':job_name_2,'job_company':job_company,'job_time':job_time,'job_special':job_special2,'job_desc':job_desc,'job_apply':job_apply,'job_url':dataurlDetail}
-        getLogger().info('解析序号为'+str(dataurlSum.index(dataurlDetail)+1)+'的url:'+dataurlDetail+'的时间为'+str((sync_stop2 - sync_start2).seconds)+'s')
+        logging.info('解析序号为'+str(dataurlSum.index(dataurlDetail)+1)+'的url:'+dataurlDetail+'的时间为'+str((sync_stop2 - sync_start2).seconds)+'s')
     endtime_url2=datetime.datetime.now()
-    getLogger().info('测试' + url2 + ',链接总数为:'+str(len(dataurlSum))+',总时间为:' + str((endtime_url2 - starttime).seconds) + 's,大概'+str('%.2f' % float(((endtime_url2 - starttime).seconds)/60.0))+'min')
+    logging.info('测试' + url2 + ',链接总数为:'+str(len(dataurlSum))+',总时间为:' + str((endtime_url2 - starttime).seconds) + 's,大概'+str('%.2f' % float(((endtime_url2 - starttime).seconds)/60.0))+'min')
     #将爬虫信息写入json文件
     if lastRunTime !='FirstRun':
         with open('D:\work\\factory\杂\\RemotiveGetInfo.json', 'r', encoding='UTF-8') as s:
@@ -188,8 +214,8 @@ try:
         return list(set(jobLink_tmp)),list(set(jobcategry_tmp))
 
     jobLink,jobcategry = getJobLink(tag)
-    # getLogger().info(len(jobcategry))
-    # getLogger().info(len(jobLink))
+    # logging.info(len(jobcategry))
+    # logging.info(len(jobLink))
 
     jobLink_category = []
     for link in jobcategry:
@@ -201,14 +227,14 @@ try:
         jobLink_category= jobLink_category+jobLink_category_2
         # print(jobcategry.index(link))
 
-    # getLogger().info(len(jobLink_category))
+    # logging.info(len(jobLink_category))
     
     jobLink_sum = jobLink+jobLink_category
     jobLink_sum = list(set(jobLink_sum))
-    # getLogger().info(len(jobLink_sum))
+    # logging.info(len(jobLink_sum))
 
     find_http_stop = datetime.datetime.now()
-    getLogger().info('寻找链接'+str(url1)+',链接总数'+str(len(jobLink_sum))+',的总时间为'+str((find_http_stop - find_http_start).seconds)+'s')
+    logging.info('寻找链接'+str(url1)+',链接总数'+str(len(jobLink_sum))+',的总时间为'+str((find_http_stop - find_http_start).seconds)+'s')
 
     for jj in jobLink_sum:
         link_analysis_start= datetime.datetime.now()
@@ -216,29 +242,29 @@ try:
         r1 = requests.get(jj)
         if r1.reason.lower() != 'ok':
             job_information[int(jobLink_sum.index(jj))+1] = {'job_desc': '网址打开失败,返回值为'+str(r1.reason.lower())+'状态码'+str(r1.status_code),  'job_link': jj}
-            getLogger().error('网址：'+jj+'打开失败,返回值为'+str(r1.reason.lower())+'状态码'+str(r1.status_code))
+            logging.error('网址：'+jj+'打开失败,返回值为'+str(r1.reason.lower())+'状态码'+str(r1.status_code))
             # index_start = index_start + 1
             continue
-        # getLogger().info(index_start)
-        # getLogger().info(jj)
+        # logging.info(index_start)
+        # logging.info(jj)
         soup1 = bs4.BeautifulSoup(r1.text,'lxml')
         job_time = (soup1.find('div', attrs={'class': 'listing-header-container'})).find('h3').contents[1].attrs[
             'datetime']
         job_time_datetime = datetime.datetime.strptime(job_time, '%Y-%m-%d %H:%M:%S')
         if lastRunTime == 'FirstRun':
-            getLogger().info('初次运行，所有信息都爬')
+            logging.info('初次运行，所有信息都爬')
         elif job_time_datetime < lastRunTime:
-            getLogger().info('此网址信息未更新，不用爬取')
+            logging.info('此网址信息未更新，不用爬取')
             job_information[int(jobLink_sum.index(jj) + 1)] = {'job_time': job_time,
                                                                           'job_desc': '工作信息未更新',
                                                                           'job_url': jj}
             sync_stop4 = datetime.datetime.now()
-            getLogger().info(
+            logging.info(
                 '解析序号为' + str(jobLink_sum.index(jj) + 1) + '的url:' + jj + '的时间为' + str(
                     (sync_stop4 - link_analysis_start).seconds) + 's')
             continue
         elif job_time_datetime >= lastRunTime:
-            getLogger().info('信息更新，重新爬取')
+            logging.info('信息更新，重新爬取')
 
         job_company2 = (soup1.find('div',attrs={'class':'company-card'})).h2.a.contents[0]
         job_sum1 = soup1.find('section',attrs={'id':'job-show'})
@@ -254,13 +280,13 @@ try:
             job_special.append(i.text.strip())
         job_information[int(jobLink_sum.index(jj))+1] = {'job_desc':job_desc,'job_time':job_time,'job_name':job_name,'job_special':job_special,'job_link':jj,'job_applyLink':job_applyLink}
         link_analysis_stop = datetime.datetime.now()
-        getLogger().info('解析序号为'+str(int(jobLink_sum.index(jj))+1)+'的url:'+jj+'的时间为' + str((link_analysis_stop - link_analysis_start).seconds)+'s')
+        logging.info('解析序号为'+str(int(jobLink_sum.index(jj))+1)+'的url:'+jj+'的时间为' + str((link_analysis_stop - link_analysis_start).seconds)+'s')
         # index_start=index_start+1
-    # getLogger().info(job_desc)
-    # getLogger().info(job_time)
-    # getLogger().info(job_name)
-    # getLogger().info(job_special)
-    # getLogger().info(job_information)
+    # logging.info(job_desc)
+    # logging.info(job_time)
+    # logging.info(job_name)
+    # logging.info(job_special)
+    # logging.info(job_information)
     if lastRunTime !='FirstRun':
         with open('D:\work\\factory\杂\\RemotiveGetInfo.json', 'r', encoding='UTF-8') as s:
             json_file2 = json.load(s)
@@ -294,10 +320,10 @@ try:
     # log_result_file.write(json_dicts)
     # log_result_file.close()
     endtime = datetime.datetime.now()
-    getLogger().info('测试' + url1 +',链接总数：' + str(len(jobLink_sum)) + ',总时间为:' + str((endtime - starttime_url1).seconds) + 's,大概'+str('%.2f' % float(((endtime - starttime_url1).seconds)/60.0))+'min')
+    logging.info('测试' + url1 +',链接总数：' + str(len(jobLink_sum)) + ',总时间为:' + str((endtime - starttime_url1).seconds) + 's,大概'+str('%.2f' % float(((endtime - starttime_url1).seconds)/60.0))+'min')
     starttime_string = starttime.strftime("%Y-%m-%d %H:%M:%S")
     congfig.set('DEFAULT','lastRunTime',starttime_string)
     write_ini_file(congfig)
-    getLogger().info('爬虫结束，测试总时间为：'+str((endtime-starttime).seconds)+'s,大概'+str('%.2f' % float(((endtime - starttime).seconds)/60.0))+'min')
+    logging.info('爬虫结束，测试总时间为：'+str((endtime-starttime).seconds)+'s,大概'+str('%.2f' % float(((endtime - starttime).seconds)/60.0))+'min')
 except Exception as e:
-    getLogger().exception(e)
+    logging.exception(e)
