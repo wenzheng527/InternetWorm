@@ -1,6 +1,8 @@
 #首先我们先导入requests这个包
 import json,copy
 import datetime
+import time
+
 import requests
 import bs4
 import threading
@@ -48,6 +50,18 @@ def read_ini_file(path):
     cfg_product = CfgObj(path, encoding='utf-8-sig')
     return cfg_product
 
+def sync_urtl(url):
+    try:
+        r_detial = None
+        r_detial = requests.get(url)
+    except Exception as ie:
+        logging.exception(ie)
+        time.sleep(1)
+        r_detial = requests.get(url)
+    if r_detial==None:
+        return False
+    else:
+        return r_detial
 
 
 try:
@@ -58,9 +72,12 @@ try:
 
     starttime = datetime.datetime.now()
     url2 = "http://remotive.io/"
-    r2 = requests.get(url2)
+    r2 = sync_urtl(url2)
+    if r2==False:
+        logging.error('打开'+str(url2)+'失败')
+        # TODO 需要处理打开链接失败时如何处理
     soup2=bs4.BeautifulSoup(r2.text,'lxml')
-    tag2 = (soup2.find('div',attrs={'id':'job_list'})).find_all('li',attrs={'class':'category-list'})
+    tag2 = (soup2.find('div',attrs={'id':'initial_job_list'})).find_all('li',attrs={'class':'category-list'})
     dataurl=[]
     dataurl_tag =[]
     more_job = []
@@ -68,38 +85,56 @@ try:
     more_job_detail=[]
     job_information2 = {}
     for tag2_tmp in tag2:
-        if tag2_tmp.find_all('h2',attrs={'class':'category-title'})==[]:
-            continue
-        else:
-            dataurl_tag.append(tag2_tmp.find_all('li',attrs={'class':'job-list-item'}))
-            ss = tag2_tmp.find_all('a',attrs={'class':'more-jobs'})
-            if ss !=[]:
-                more_job_tag.append(ss)
+        # if tag2_tmp.find_all('h2',attrs={'class':'category-title'})==[]:
+        #     continue
+        # else:
+        dataurl_tag.append(tag2_tmp.find_all('a',attrs={'class':'job-tile-title'}))
+        ss = tag2_tmp.find_all('a',attrs={'class':'tw-flex tw-items-center tw-justify-end tw-mt-2 tw-text-sm tw-text-gray-700 hover:tw-text-orange-700'})
+        # if ss !=[]:
+        more_job_tag.append(ss)
 
     for dataurl_tag_tmp in dataurl_tag:
         for dataurl_tag_tmp_tmp in dataurl_tag_tmp:
-            dataurl.append(url2+dataurl_tag_tmp_tmp.attrs['data-url'])
+            dataurl.append(url2+dataurl_tag_tmp_tmp.attrs['href'])
 
     for more_job_tag_tmp in more_job_tag:
         for more_job_tag_tmp_tmp in more_job_tag_tmp:
             more_job.append(url2+more_job_tag_tmp_tmp.attrs['href'])
     for more_link in more_job:
-        r_tmp = requests.get(more_link)
+        r_tmp = sync_urtl(more_link)
+        if r_tmp==False:
+            logging.error('打开' + str(more_link) + '失败')
+            # TODO 需要进行打开链接失败时如何处理
         soup_tmp=bs4.BeautifulSoup(r_tmp.text,'lxml')
-        url_tmp = (soup_tmp.find('div',attrs={'id':'job_list'})).find_all('li',attrs={'class':"job-list-item"})
+        url_tmp = soup_tmp.find_all('a',attrs={'class':"job-tile-title"})
         for url_tmp_tmp in url_tmp:
-            more_job_detail.append(url2+url_tmp_tmp.attrs['data-url'])
+            more_job_detail.append(url2+url_tmp_tmp.attrs['href'])
     more_job_detail = list(set(more_job_detail))
     dataurlSum = dataurl+more_job_detail
     dataurlSum = list(set(dataurlSum))
     job_end1= datetime.datetime.now()
     logging.info('寻找链接' + url2 +',链接总数' + str(len(dataurlSum)) + ',总时间为' + str((job_end1 - starttime).seconds) + 's')
     for dataurlDetail in dataurlSum:
+        r_detial = None
         job_special2 = []
         sync_start2 = datetime.datetime.now()
-        # logging.info(dataurlDetail)
-        r_detial=requests.get(dataurlDetail)
-        if r_detial.reason.lower() !='ok':
+        logging.info(dataurlDetail)
+        # try:
+        r_detial = sync_urtl(dataurlDetail)
+        # except Exception as ie:
+        #     logging.exception(ie)
+        #     time.sleep(1)
+        #     r_detial = sync_urtl(dataurlDetail)
+        if r_detial==False:
+            logging.error('打开' + str(dataurlDetail) + '失败')
+            # TODO 目前的处理方法是在获取的信息中标注
+            job_information2[int(dataurlSum.index(dataurlDetail) + 1)] = {
+                'job_desc': '网址打开失败，返回' + str(r_detial.reason.lower()) + '状态码为' + str(r_detial.status_code),
+                'job_url': dataurlDetail}
+            logging.error('网址' + str(dataurlDetail) + '打开失败，返回' + str(r_detial.reason.lower()) + '状态码为' + str(
+                r_detial.status_code))
+            continue
+        elif r_detial.reason.lower() !='ok':
             job_information2[int(dataurlSum.index(dataurlDetail)+1)]={'job_desc':'网址打开失败，返回'+str(r_detial.reason.lower())+'状态码为'+str(r_detial.status_code),'job_url':dataurlDetail}
             logging.error('网址'+str(dataurlDetail)+'打开失败，返回'+str(r_detial.reason.lower())+'状态码为'+str(r_detial.status_code))
             continue
@@ -142,7 +177,7 @@ try:
         for tip_tmp in tip:
             job_special2.append(tip_tmp.text.strip())
         job_desc=job_summary.find('div',attrs={'class':'job-description'}).text.strip()
-        job_apply=url2+((job_summary.find('div',attrs={'class':'apply-wrapper'})).find('a',attrs={'class':'btn btn-apply'})).attrs['href']
+        job_apply=((job_summary.find('div',attrs={'class':'apply-wrapper'})).find('a',attrs={'class':'btn btn-apply'})).attrs['apply-url']
         sync_stop2 = datetime.datetime.now()
         job_information2[int(dataurlSum.index(dataurlDetail)+1)]={'job_name':job_name_2,'job_company':job_company,'job_time':job_time,'job_special':job_special2,'job_desc':job_desc,'job_apply':job_apply,'job_url':dataurlDetail}
         logging.info('解析序号为'+str(dataurlSum.index(dataurlDetail)+1)+'的url:'+dataurlDetail+'的时间为'+str((sync_stop2 - sync_start2).seconds)+'s')
@@ -150,7 +185,7 @@ try:
     logging.info('测试' + url2 + ',链接总数为:'+str(len(dataurlSum))+',总时间为:' + str((endtime_url2 - starttime).seconds) + 's,大概'+str('%.2f' % float(((endtime_url2 - starttime).seconds)/60.0))+'min')
     #将爬虫信息写入json文件
     if lastRunTime !='FirstRun':
-        with open('D:\work\\factory\杂\\RemotiveGetInfo.json', 'r', encoding='UTF-8') as s:
+        with open('RemotiveGetInfo.json', 'r', encoding='UTF-8') as s:
             json_file = json.load(s)
 
         for k,l in job_information2.items():
@@ -172,18 +207,21 @@ try:
 
 
         json_dicts2 = json.dumps(json_file, indent=4, ensure_ascii=False)
-        with open('D:\work\\factory\杂\\RemotiveGetInfo.json', 'w', encoding="UTF-8") as f:
+        with open('RemotiveGetInfo.json', 'w', encoding="UTF-8") as f:
             f.write(json_dicts2)
     else:
         json_dicts2 = json.dumps(job_information2, indent=4, ensure_ascii=False)
-        with open('D:\work\\factory\杂\\RemotiveGetInfo.json', 'w', encoding="UTF-8") as f:
+        with open('RemotiveGetInfo.json', 'w', encoding="UTF-8") as f:
             f.write(json_dicts2)
 
     starttime_url1=datetime.datetime.now()
     # index_start = len(job_information2)+1
     url1="https://weworkremotely.com"
     find_http_start = datetime.datetime.now()
-    r = requests.get(url1)
+    r = sync_urtl(url1)
+    if r ==False:
+        logging.error('打开' + str(url1) + '失败')
+        # TODO 需要处理打开链接失败时如何处理
     soup = bs4.BeautifulSoup(r.text,'lxml')
     #输出结果
     tag = (soup.find('div',attrs={'id':'job_list'})).find_all('a')
@@ -219,7 +257,10 @@ try:
 
     jobLink_category = []
     for link in jobcategry:
-        r_link = requests.get(link)
+        r_link = sync_urtl(link)
+        if r_link==False:
+            logging.error('打开' + str(link) + '失败')
+            # TODO 需要处理打开链接失败时如何处理
         soup_link = bs4.BeautifulSoup(r_link.text, 'lxml')
         # 输出结果
         tag_link = (soup_link.find('div', attrs={'id': 'job_list'})).find_all('a')
@@ -239,7 +280,10 @@ try:
     for jj in jobLink_sum:
         link_analysis_start= datetime.datetime.now()
         job_special=[]
-        r1 = requests.get(jj)
+        r1 = sync_urtl(jj)
+        if r1==False:
+            logging.error('打开' + str(jj) + '失败')
+            # TODO 需要处理打开链接失败时如何处理
         if r1.reason.lower() != 'ok':
             job_information[int(jobLink_sum.index(jj))+1] = {'job_desc': '网址打开失败,返回值为'+str(r1.reason.lower())+'状态码'+str(r1.status_code),  'job_link': jj}
             logging.error('网址：'+jj+'打开失败,返回值为'+str(r1.reason.lower())+'状态码'+str(r1.status_code))
@@ -250,7 +294,7 @@ try:
         soup1 = bs4.BeautifulSoup(r1.text,'lxml')
         job_time = (soup1.find('div', attrs={'class': 'listing-header-container'})).find('h3').contents[1].attrs[
             'datetime']
-        job_time_datetime = datetime.datetime.strptime(job_time, '%Y-%m-%d %H:%M:%S')
+        job_time_datetime = datetime.datetime.strptime(job_time, '%Y-%m-%dT%H:%M:%SZ')
         if lastRunTime == 'FirstRun':
             logging.info('初次运行，所有信息都爬')
         elif job_time_datetime < lastRunTime:
@@ -288,7 +332,7 @@ try:
     # logging.info(job_special)
     # logging.info(job_information)
     if lastRunTime !='FirstRun':
-        with open('D:\work\\factory\杂\\RemotiveGetInfo.json', 'r', encoding='UTF-8') as s:
+        with open('RemotiveGetInfo.json', 'r', encoding='UTF-8') as s:
             json_file2 = json.load(s)
 
         for o,p in job_information.items():
