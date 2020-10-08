@@ -53,11 +53,14 @@ def read_ini_file(path):
 def sync_urtl(url):
     try:
         r_detial = None
-        r_detial = requests.get(url)
+        r_detial = requests.get(url,timeout=(5,30))
     except Exception as ie:
         logging.exception(ie)
         time.sleep(1)
-        r_detial = requests.get(url)
+        try:
+            r_detial = requests.get(url,timeout=(5,30))
+        except Exception as ee:
+            logging.exception(ee)
     if r_detial==None:
         return False
     else:
@@ -76,6 +79,7 @@ try:
     if r2==False:
         logging.error('打开'+str(url2)+'失败')
         # TODO 需要处理打开链接失败时如何处理
+        raise IOError('打开'+str(url2)+'失败')
     soup2=bs4.BeautifulSoup(r2.text,'lxml')
     tag2 = (soup2.find('div',attrs={'id':'initial_job_list'})).find_all('li',attrs={'class':'category-list'})
     dataurl=[]
@@ -103,7 +107,8 @@ try:
     for more_link in more_job:
         r_tmp = sync_urtl(more_link)
         if r_tmp==False:
-            logging.error('打开' + str(more_link) + '失败')
+            logging.error('打开' + str(more_link) + '失败,忽略此链接')
+            continue
             # TODO 需要进行打开链接失败时如何处理
         soup_tmp=bs4.BeautifulSoup(r_tmp.text,'lxml')
         url_tmp = soup_tmp.find_all('a',attrs={'class':"job-tile-title"})
@@ -121,18 +126,12 @@ try:
         logging.info(dataurlDetail)
         # try:
         r_detial = sync_urtl(dataurlDetail)
-        # except Exception as ie:
-        #     logging.exception(ie)
-        #     time.sleep(1)
-        #     r_detial = sync_urtl(dataurlDetail)
+
+
         if r_detial==False:
             logging.error('打开' + str(dataurlDetail) + '失败')
             # TODO 目前的处理方法是在获取的信息中标注
-            job_information2[int(dataurlSum.index(dataurlDetail) + 1)] = {
-                'job_desc': '网址打开失败，返回' + str(r_detial.reason.lower()) + '状态码为' + str(r_detial.status_code),
-                'job_url': dataurlDetail}
-            logging.error('网址' + str(dataurlDetail) + '打开失败，返回' + str(r_detial.reason.lower()) + '状态码为' + str(
-                r_detial.status_code))
+            logging.error('忽略此url:' + str(dataurlDetail) + '的解析')
             continue
         elif r_detial.reason.lower() !='ok':
             job_information2[int(dataurlSum.index(dataurlDetail)+1)]={'job_desc':'网址打开失败，返回'+str(r_detial.reason.lower())+'状态码为'+str(r_detial.status_code),'job_url':dataurlDetail}
@@ -221,6 +220,7 @@ try:
     r = sync_urtl(url1)
     if r ==False:
         logging.error('打开' + str(url1) + '失败')
+        raise IOError('打开' + str(url1) + '失败')
         # TODO 需要处理打开链接失败时如何处理
     soup = bs4.BeautifulSoup(r.text,'lxml')
     #输出结果
@@ -259,7 +259,8 @@ try:
     for link in jobcategry:
         r_link = sync_urtl(link)
         if r_link==False:
-            logging.error('打开' + str(link) + '失败')
+            logging.error('打开' + str(link) + '失败,忽略此url')
+            continue
             # TODO 需要处理打开链接失败时如何处理
         soup_link = bs4.BeautifulSoup(r_link.text, 'lxml')
         # 输出结果
@@ -283,8 +284,10 @@ try:
         r1 = sync_urtl(jj)
         if r1==False:
             logging.error('打开' + str(jj) + '失败')
+            logging.error('忽略此url:' + str(jj) + '的解析')
             # TODO 需要处理打开链接失败时如何处理
-        if r1.reason.lower() != 'ok':
+            continue
+        elif r1.reason.lower() != 'ok':
             job_information[int(jobLink_sum.index(jj))+1] = {'job_desc': '网址打开失败,返回值为'+str(r1.reason.lower())+'状态码'+str(r1.status_code),  'job_link': jj}
             logging.error('网址：'+jj+'打开失败,返回值为'+str(r1.reason.lower())+'状态码'+str(r1.status_code))
             # index_start = index_start + 1
@@ -354,11 +357,11 @@ try:
 
 
         json_dicts = json.dumps(json_file2, indent=4, ensure_ascii=False)
-        with open('D:\work\\factory\杂\WeworkremotelyGetInfo.json', 'w', encoding="UTF-8") as f:
+        with open('WeworkremotelyGetInfo.json', 'w', encoding="UTF-8") as f:
             f.write(json_dicts)
     else:
         json_dicts = json.dumps(job_information, indent=4, ensure_ascii=False)
-        with open('D:\work\\factory\杂\WeworkremotelyGetInfo.json', 'w', encoding="UTF-8") as f:
+        with open('WeworkremotelyGetInfo.json', 'w', encoding="UTF-8") as f:
             f.write(json_dicts)
 
     # log_result_file.write(json_dicts)
